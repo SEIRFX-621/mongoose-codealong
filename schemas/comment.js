@@ -6,7 +6,4 @@ const commentSchema = new mongoose.Schema({
     date: Date
 });
 
-module.exports = {
-    Commentmodel: mongoose.model('Comment', commentSchema),
-    commentSchema
-}
+module.exports =  mongoose.model('Comment', commentSchema)

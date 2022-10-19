@@ -132,13 +132,26 @@ app.get('/posts', (req, res) => {
 });
 // fins one post (by email)
 
-app.get('/posts/:title', (req, res) => {
-    console.log('find post by', req.params.title)
-    Post.findOne({
-        title: req.params.title
-    })
+// app.get('/posts/:title', (req, res) => {
+//     console.log('find post by', req.params.title)
+//     Post.findOne({
+//         title: req.params.title
+//     })
+//     .then(post => {
+//         console.log('Here is the post', post);
+//         res.json({ post: post });
+//     })
+//     .catch(error => { 
+//         console.log('error', error);
+//         res.json({ message: "Error ocurred, please try again" });
+//     });
+// });
+app.get('/posts/:id', (req, res) => {
+    console.log('find post by ID', req.params.id);
+    // console.log(mongoose.Types.ObjectId(req.params.id))
+    Post.findOne({ _id: mongoose.Types.ObjectId(req.params.id) })
     .then(post => {
-        console.log('Here is the post', post.body);
+        console.log('Here is the post', post);
         res.json({ post: post });
     })
     .catch(error => { 
@@ -162,19 +175,20 @@ app.post('/posts', (req, res) => {
     });
 });
 //Put Route 
-app.put('/posts/:title', (req, res) => {
+app.put('/posts/:id', (req, res) => {
     console.log('route is being on PUT')
-    Post.findOne({ title: req.params.title })
+    Post.findById(req.params.id )
     .then(foundPost => {
         console.log('Post found', foundPost);
-        Post.findOneAndUpdate({ title: req.params.title }, 
-        { 
+        Post.findByIdAndUpdate( req.params.id, { 
             title: req.body.title ? req.body.title : foundPost.title,
             body: req.body.body ? req.body.body : foundPost.body,
-        })
+        }, {
+            upsert: true
+        })   
         .then(post => {
             console.log('Post was updated', post);
-            res.json({ post: post })
+            res.redirect(`/posts/${req.params.id}`)
         })
         .catch(error => {
             console.log('error', error) 
@@ -188,11 +202,11 @@ app.put('/posts/:title', (req, res) => {
     
 });
 //Delete Route 
-app.delete('/posts/:title', (req, res) => {
-    Post.findOneAndRemove({ title: req.params.title })
+app.delete('/posts/:id', (req, res) => {
+    Post.findByIdAndRemove(req.params.id)
     .then(response => {
         console.log('This was delete', response);
-        res.json({ message: `${req.params.title} was deleted`});
+        res.json({ message: `Post ${req.params.id} was deleted`});
     })
     .catch(error => {
         console.log('error', error) 
@@ -215,14 +229,12 @@ app.get('/comments', (req, res) => {
     });
 });
 //find one comment( by header)
-app.get('/posts/:title', (req, res) => {
-    console.log('find post by', req.params.title)
-    Post.findOne({
-        title: req.params.title
-    })
-    .then(post => {
-        console.log('Here is the post', post.body);
-        res.json({ post: post });
+app.get('/comments/:header', (req, res) => {
+    console.log('find comment by', req.params.id)
+    Comment.findById(req.params.id)
+    .then(comment => {
+        console.log('Here is the comment', comment);
+        res.json({ comment: comment });
     })
     .catch(error => { 
         console.log('error', error);
@@ -230,38 +242,59 @@ app.get('/posts/:title', (req, res) => {
     });
 });
 //create a comment 
-app.post('/posts', (req, res) => {
-    Post.create({
-        title: req.body.title,
-        body: req.body.body,
-    })
-    .then(post=> {
-        console.log('New post =>>', post);
-        res.json({ post: post });
+app.post('/posts/:id/comments', (req, res) => {
+    Post.findById(req.params.id)
+    .then(post => {
+        console.log('Heyyy, this is the post', post);
+        // create and pust comment inside of post
+        Comment.create({
+            header: req.body.header,
+            content: req.body.content
+        })
+        .then(comment => {
+            post.comments.push(comment);
+            // save the post
+            post.save();
+            res.redirect(`/posts/${req.params.id}`);
+        })
+        .catch(error => { 
+            console.log('error', error);
+            res.json({ message: "Error ocurred, please try again" });
+        });
     })
     .catch(error => { 
-        console.log('error', error) 
-        res.json({ message: "Error ocurred, please try again" })
+        console.log('error', error);
+        res.json({ message: "Error ocurred, please try again" });
     });
 });
+    // Comment.create({
+    //     header: req.body.header,
+    //     content: req.body.content,
+    // })
+    // .then(comment=> {
+    //     console.log('New comment =>>', comment);
+    //     res.json({ comment: comment });
+    // })
+    // .catch(error => { 
+    //     console.log('error', error) 
+    //     res.json({ message: "Error ocurred, please try again" })
+    // });
 //Put Route 
-app.put('/users/:email', (req, res) => {
+app.put('/comments/:header', (req, res) => {
     console.log('route is being on PUT')
-    User.findOne({ email: req.params.email })
-    .then(foundUser => {
-        console.log('User found', foundUser);
-        User.findOneAndUpdate({ email: req.params.email }, 
+    Comment.findOne({ header: req.params.header })
+    .then(foundComment => {
+        console.log('comment found', foundComment);
+        Comment.findOneAndUpdate({ header: req.params.header }, 
         { 
-            name: req.body.name ? req.body.name : foundUser.name,
-            email: req.body.email ? req.body.email : foundUser.email,
-            meta: {
-                age: req.body.age ? req.body.age : foundUser.age,
-                website: req.body.website ? req.body.website : foundUser.website
-            }
+            header: req.body.header ? req.body.header : foundUser.header,
+            content: req.body.content ? req.body.content : foundUser.content,
+        }, {
+            upsert: true
         })
-        .then(user => {
-            console.log('User was updated', user);
-            res.json({ user: user })
+        .then(comment => {
+            console.log('comment was updated', comment);
+            res.json({ comment: comment })
         })
         .catch(error => {
             console.log('error', error) 
@@ -277,11 +310,11 @@ app.put('/users/:email', (req, res) => {
 
 //delete route
 
-app.delete('/users/:email', (req, res) => {
-    User.findOneAndRemove({ email: req.params.email })
+app.delete('/comments/:header', (req, res) => {
+    Comment.findOneAndRemove({ header: req.params.header })
     .then(response => {
         console.log('This was delete', response);
-        res.json({ message: `${req.params.email} was deleted`});
+        res.json({ message: `${req.params.header} was deleted`});
     })
     .catch(error => {
         console.log('error', error) 
