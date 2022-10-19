@@ -280,12 +280,12 @@ app.post('/posts/:id/comments', (req, res) => {
     //     res.json({ message: "Error ocurred, please try again" })
     // });
 //Put Route 
-app.put('/comments/:header', (req, res) => {
+app.put('/comments/:id', (req, res) => {
     console.log('route is being on PUT')
-    Comment.findOne({ header: req.params.header })
+    Comment.findById(req.params.id)
     .then(foundComment => {
         console.log('comment found', foundComment);
-        Comment.findOneAndUpdate({ header: req.params.header }, 
+        Comment.findByIdAndUpdate(req.params.id, 
         { 
             header: req.body.header ? req.body.header : foundUser.header,
             content: req.body.content ? req.body.content : foundUser.content,
@@ -311,7 +311,7 @@ app.put('/comments/:header', (req, res) => {
 //delete route
 
 app.delete('/comments/:header', (req, res) => {
-    Comment.findOneAndRemove({ header: req.params.header })
+    Comment.findByIdAndRemove(req.params.id)
     .then(response => {
         console.log('This was delete', response);
         res.json({ message: `${req.params.header} was deleted`});
