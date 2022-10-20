@@ -280,21 +280,20 @@ app.post('/posts/:id/comments', (req, res) => {
     //     res.json({ message: "Error ocurred, please try again" })
     // });
 //Put Route 
-app.put('/comments/:id', (req, res) => {
+app.put('/:id', (req, res) => {
     console.log('route is being on PUT')
     Comment.findById(req.params.id)
     .then(foundComment => {
-        console.log('comment found', foundComment);
-        Comment.findByIdAndUpdate(req.params.id, 
-        { 
-            header: req.body.header ? req.body.header : foundUser.header,
-            content: req.body.content ? req.body.content : foundUser.content,
-        }, {
-            upsert: true
+        console.log('Comment found', foundComment);
+        Comment.findByIdAndUpdate(req.params.id, { 
+                header: req.body.header ? req.body.header : foundComment.header,
+                content: req.body.content ? req.body.content : foundComment.content,
+        }, { 
+            upsert: true 
         })
         .then(comment => {
-            console.log('comment was updated', comment);
-            res.json({ comment: comment })
+            console.log('Comment was updated', comment);
+            res.redirect(`/comments/${req.params.id}`);
         })
         .catch(error => {
             console.log('error', error) 
@@ -305,16 +304,15 @@ app.put('/comments/:id', (req, res) => {
         console.log('error', error) 
         res.json({ message: "Error ocurred, please try again" })
     })
-    
 });
 
 //delete route
 
-app.delete('/comments/:header', (req, res) => {
+app.delete('/:id', (req, res) => {
     Comment.findByIdAndRemove(req.params.id)
     .then(response => {
-        console.log('This was delete', response);
-        res.json({ message: `${req.params.header} was deleted`});
+        console.log('This was deleted', response);
+        res.json({ message: `Comment ${req.params.id} was deleted`});
     })
     .catch(error => {
         console.log('error', error) 
